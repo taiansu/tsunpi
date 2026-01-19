@@ -1,5 +1,5 @@
 #!/bin/bash
-# v2.0.2
+# v2.0.3
 
 # 顏色定義
 RED='\033[0;31m'
@@ -87,6 +87,7 @@ check_homebrew() {
     fi
 
     if [[ "$DRY_RUN" == true ]]; then
+        INSTALL_HOMEBREW=false
         return 0
     fi
 
@@ -100,7 +101,7 @@ check_homebrew() {
             eval "$(/usr/local/bin/brew shellenv)"
         fi
 
-        reload_shell()
+        reload_shell
 
         success "Homebrew 安裝完成"
     else

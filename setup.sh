@@ -92,12 +92,18 @@ check_homebrew() {
     fi
 
     info "開始安裝 Homebrew..."
+
+    warning "安裝 Homebrew 需要 admin 權限"
+    info "請輸入你的 macOS 使用者密碼..."
     echo ""
-    warning "此步驟需要 admin 權限，會要求輸入密碼"
-    echo ""
+    
+    # 先取得 sudo 權限
+    if ! sudo -v; then
+        error "無法取得 admin 權限，安裝中止"
+        exit 1
+    fi
 
     if NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-
         # 設定 Homebrew 環境變數
         if [[ -f "/opt/homebrew/bin/brew" ]]; then
             eval "$(/opt/homebrew/bin/brew shellenv)"

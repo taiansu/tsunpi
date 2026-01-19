@@ -1,5 +1,5 @@
 #!/bin/bash
-# v2.0.1
+# v2.0.2
 
 # 顏色定義
 RED='\033[0;31m'
@@ -34,7 +34,7 @@ command_exists() {
 }
 
 reload_shell() {
-    source ~/.bash_profile 2>/dev/null || source ~/.zshrc 2>/dev/null`
+    source ~/.bash_profile 2>/dev/null || source ~/.zshrc 2>/dev/null
 }
 
 # 解析參數
@@ -489,7 +489,7 @@ main() {
 }
 
 # Check if we're source the file or execute it directly
-# check by 'return' work for bash and zsh
+# check by `return` work for bash and zsh
 (return 0 2>/dev/null) && sourced=1 || sourced=0
 
 if [ $sourced -eq 0 ]; then

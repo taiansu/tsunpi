@@ -1,10 +1,10 @@
 # 貢獻指南
 
-感謝你對 **dandori** 的興趣！我們歡迎各種形式的貢獻。
+感謝你對 **tsunpi** 的興趣！我們歡迎各種形式的貢獻。
 
 ## 🐛 回報問題
 
-發現 bug 或有功能建議？請[開 issue](https://github.com/YOUR_USERNAME/dandori/issues/new)。
+發現 bug 或有功能建議？請[開 issue](https://github.com/YOUR_USERNAME/tsunpi/issues/new)。
 
 ### Bug 回報範本
 
@@ -45,8 +45,8 @@
 1. **Fork 專案**
    ```bash
    # 在 GitHub 上 fork 專案
-   git clone https://github.com/taiansu/dandori.git
-   cd dandori
+   git clone https://github.com/taiansu/tsunpi.git
+   cd tsunpi
    ```
 
 2. **建立分支**
@@ -166,13 +166,9 @@ docs: 更新安裝時間說明
 
 有任何疑問？可以：
 
-- 開 [issue](https://github.com/YOUR_USERNAME/dandori/issues) 討論
-- 在 [Discussions](https://github.com/YOUR_USERNAME/dandori/discussions) 發問
+- 開 [issue](https://github.com/YOUR_USERNAME/tsunpi/issues) 討論
+- 在 [Discussions](https://github.com/YOUR_USERNAME/tsunpi/discussions) 發問
 
 ## 🙏 感謝
 
-感謝每一位貢獻者！你的貢獻讓 dandori 變得更好。
-
----
-
-**記住段取り的精神** - 做好準備，追求完美 ✨
+感謝每一位貢獻者！你的貢獻讓 tsunpi 變得更好。

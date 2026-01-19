@@ -92,7 +92,11 @@ check_homebrew() {
     fi
 
     info "開始安裝 Homebrew..."
-    if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+    echo ""
+    warning "此步驟需要 admin 權限，會要求輸入密碼"
+    echo ""
+
+    if NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
 
         # 設定 Homebrew 環境變數
         if [[ -f "/opt/homebrew/bin/brew" ]]; then

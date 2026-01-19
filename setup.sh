@@ -489,7 +489,7 @@ main() {
 }
 
 # Check if we're source the file or execute it directly
-# check by `return` work for bash and zsh
+# check by 'return' work for bash and zsh
 (return 0 2>/dev/null) && sourced=1 || sourced=0
 
 if [ $sourced -eq 0 ]; then

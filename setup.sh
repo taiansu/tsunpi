@@ -33,6 +33,10 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+reload_shell() {
+    source ~/.bash_profile 2>/dev/null || source ~/.zshrc 2>/dev/null`
+}
+
 # 解析參數
 parse_arguments() {
     INTERACTIVE=false
@@ -95,6 +99,8 @@ check_homebrew() {
         elif [[ -f "/usr/local/bin/brew" ]]; then
             eval "$(/usr/local/bin/brew shellenv)"
         fi
+
+        reload_shell()
 
         success "Homebrew 安裝完成"
     else

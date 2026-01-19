@@ -1,12 +1,12 @@
-![Test Status](https://github.com/taiansu/dandori/actions/workflows/test.yml/badge.svg)
-![License](https://img.shields.io/github/license/taiansu/dandori)
+![Test Status](https://github.com/taiansu/tsunpi/actions/workflows/test.yml/badge.svg)
+![License](https://img.shields.io/github/license/taiansu/tsunpi)
 ![macOS](https://img.shields.io/badge/macOS-13%2B-blue)
 
-# 🍽️ dandori (段取り)
+# 🍽️ tsún-pī (準備)
 
-> 為你的 macOS 開發環境做好段取り
+> 為你的開發環境做好準備(tsún-pī) 
 
-**dandori**（段取り）是日本職人文化中的核心概念，意指「在開始工作前做好完美的準備」。就像壽司師傅備料、木工師傅排列工具，我們為你的開發環境做好段取り。
+**tsunpi**（準備，台語 tsún-pī / 日語 じゅんび junbi）- 無論哪種語言，準備工作都是成功的基礎。就像料理前備好食材、出門前整理行囊，我們為你的開發環境做好準備。
 
 一行指令，自動安裝並設定你的 macOS 開發環境。
 
@@ -23,19 +23,19 @@
 ### 預設安裝（Python, Elixir, Node）
 
 ```bash
-curl -fsSL https://dandori.phx.tw | bash
+curl -fsSL https://tsunpi.phx.tw | bash
 ```
 
 ### 自訂語言組合
 
 ```bash
-curl -fsSL https://dandori.phx.tw | bash -s -- --langs=python,rust,ruby
+curl -fsSL https://tsunpi.phx.tw | bash -s -- --langs=python,rust,ruby
 ```
 
 ### 互動式選擇
 
 ```bash
-curl -fsSL https://dandori.phx.tw | bash -s -- --interactive
+curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
 ```
 
 ## 📦 安裝內容
@@ -72,16 +72,16 @@ curl -fsSL https://dandori.phx.tw | bash -s -- --interactive
 
 ```bash
 # 使用預設語言組合
-curl -fsSL https://dandori.phx.tw | bash
+curl -fsSL https://tsunpi.phx.tw | bash
 
 # 指定語言（逗號分隔，不含空格）
-curl -fsSL https://dandori.phx.tw | bash -s -- --langs=python,rust
+curl -fsSL https://tsunpi.phx.tw | bash -s -- --langs=python,rust
 
 # 互動式選擇
-curl -fsSL https://dandori.phx.tw | bash -s -- --interactive
+curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
 
 # Dry run 模式 (只偵測並列印安裝計劃，不實際執行)
-curl -fsSL https://dandori.phx.tw | bash -s -- --dry
+curl -fsSL https://tsunpi.phx.tw | bash -s -- --dry
 ```
 
 ### 互動模式
@@ -123,7 +123,7 @@ curl -fsSL https://dandori.phx.tw | bash -s -- --dry
 
 ```bash
 # 下載腳本
-curl -fsSL https://dandori.phx.tw > setup.sh
+curl -fsSL https://tsunpi.phx.tw > setup.sh
 
 # 檢視內容
 less setup.sh
@@ -132,7 +132,7 @@ less setup.sh
 bash setup.sh
 ```
 
-或直接查看 [GitHub 原始碼](https://github.com/taiansu/dandori)。
+或直接查看 [GitHub 原始碼](https://github.com/taiansu/tsunpi)。
 
 ## ⚙️ 運作原理
 
@@ -193,7 +193,7 @@ A: `--langs` 選項可以安裝 `mise` 有 [支援](https://mise.jdx.dev/registr
 
 
 ```bash
-curl -fsSL https://dandori.phx.tw | bash -s -- --langs=python,kotlin,clojure
+curl -fsSL https://tsunpi.phx.tw | bash -s -- --langs=python,kotlin,clojure
 ```
 
 <br/>
@@ -219,8 +219,8 @@ ping github.com
 # 手動安裝 Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/setup.sh)"
 
-# 重新執行 dandori
-curl -fsSL https://dandori.phx.tw | bash
+# 重新執行 tsunpi
+curl -fsSL https://tsunpi.phx.tw | bash
 ```
 
 ### mise 安裝語言失敗
@@ -268,8 +268,8 @@ brew cleanup
 
 ```bash
 # Clone repository
-git clone https://github.com/taiansu/dandori.git
-cd dandori
+git clone https://github.com/taiansu/tsunpi.git
+cd tsunpi
 
 # 測試腳本
 ./setup.sh --langs=python --ci
@@ -305,6 +305,6 @@ MIT License - 詳見 [LICENSE](LICENSE)
 
 ---
 
-**dandori** - 為你的開發環境做好段取り 🍽️
+**tsunpi** - 為你的開發環境做好準備 🍽️
 
 Made with ❤️ for developers who value preparation

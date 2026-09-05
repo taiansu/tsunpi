@@ -4,6 +4,8 @@
 
 # 🍽️ tsún-pī (準備)
 
+**繁體中文** | [English](README.en.md)
+
 > 為你的開發環境做好準備(tsún-pī) 
 
 **tsunpi**（準備，台語 tsún-pī / 日語 じゅんび junbi）- 無論哪種語言，準備工作都是成功的基礎。就像料理前備好食材、出門前整理行囊，我們為你的開發環境做好準備。
@@ -48,12 +50,14 @@ curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
 - **fzf** - 模糊搜尋工具
 - **fd** - 檔案搜尋工具
 - **uv** - Python 專案管理工具
+- **stow** - 透過符號連結管理設定檔（dotfiles）
+- **zoxide** - 記住常用目錄，快速切換路徑
 
 ### 支援的語言環境
 
 | 選項 | 語言 | 說明 |
 |------|------|------|
-| `python` | [Python](python.org) | 最新穩定版 |
+| `python` | [Python](https://www.python.org/) | 最新穩定版 |
 | `elixir` | [Elixir + Erlang](https://elixir-lang.org/) | 同時安裝對應的 Erlang 版本 |
 | `node` | [Node.js + npm](https://nodejs.org/en) | JavaScript 執行環境 |
 | `rust` | [Rust + Cargo](https://rust-lang.org/) |  |
@@ -84,16 +88,40 @@ curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
 curl -fsSL https://tsunpi.phx.tw | bash -s -- --dry
 ```
 
+### 介面語言
+
+支援繁體中文（`zh-TW`）與英文（`en`）。`--locale` 控制 tsunpi 的介面語言，`--langs` 仍用於選擇要安裝的程式語言：
+
+```bash
+# 英文介面
+curl -fsSL https://tsunpi.phx.tw | bash -s -- --locale=en
+
+# 繁體中文介面，安裝 Python 與 Rust
+curl -fsSL https://tsunpi.phx.tw | bash -s -- --locale=zh-TW --langs=python,rust
+
+# 設定預設介面語言
+export TSUNPI_LOCALE=zh-TW
+./setup.sh --dry
+```
+
+語系優先順序：`--locale` > `TSUNPI_LOCALE` > `LC_ALL` > `LC_MESSAGES` > `LANG` > 英文。
+
+- 系統語系取第一個非空值；無法辨識時回退英文，不再往下尋找。
+- 語系名稱不分大小寫，接受 `-` 或 `_` 分隔，並忽略編碼與 modifier 後綴。英文語系（例如 `en_US.UTF-8`）對應 `en`；`zh_TW`、`zh_HK`、`zh_MO`、`zh-Hant` 與 `zh-Hant-*` 對應 `zh-TW`。
+- 其他系統語系（包含 `C`、`POSIX`）回退英文。明確指定不支援或空白的 `--locale`／`TSUNPI_LOCALE` 會報錯；較高優先序的設定會覆蓋較低者。
+- 只切換 tsunpi 自己的訊息，不修改 `LANG` 或 `LC_ALL`；Homebrew、mise、sudo 的輸出由各工具決定。
+- 兩種介面皆使用數字選單與 `Y/n` 回答；指令、工具名稱與產生的設定內容不隨介面語言改變。
+
 ### 互動模式
 
-使用 `--interactive` 參數時，會顯示選單：
+使用 `--interactive` 參數時，會以選定的介面語言顯示選單。以下為 `--locale=zh-TW` 的範例：
 
 ```
 請選擇要安裝的語言環境 (輸入數字組合，例如 134)
 直接按 Enter 使用預設: Python, Elixir, Node
 
 1) Python
-2) Elixir (同時安裝對應 Erlang 版本)
+2) Elixir (自動安裝對應 Erlang 版本)
 3) Node
 4) Rust
 5) Ruby
@@ -137,7 +165,7 @@ bash setup.sh
 ## ⚙️ 運作原理
 
 1. **檢查 Homebrew** - 若未安裝則自動安裝 (可能需要輸入使用者密碼)
-2. **安裝基礎工具** - 使用 Homebrew 安裝 git, mise, ripgrep, fzf
+2. **安裝基礎工具** - 使用 Homebrew 安裝 git, mise, ripgrep, fzf, fd, uv, stow, zoxide
 3. **產生 mise 設定** - 建立 `~/.config/mise/config.toml`
 4. **設定 Shell 整合** - 自動加入 `mise activate` 到你的 shell rc 檔
 5. **安裝語言環境** - 使用 mise 安裝選定的程式語言
@@ -217,7 +245,7 @@ A: 計劃中
 ping github.com
 
 # 手動安裝 Homebrew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/setup.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # 重新執行 tsunpi
 curl -fsSL https://tsunpi.phx.tw | bash
@@ -274,8 +302,9 @@ cd tsunpi
 # 測試腳本
 ./setup.sh --langs=python --ci
 
-# 執行測試
-# GitHub Actions 會自動測試所有場景
+# 執行本機函式檢查與語系回歸測試（不進行安裝）
+/bin/bash test.sh
+# GitHub Actions 另外執行完整安裝測試
 ```
 
 ### 測試
@@ -286,6 +315,7 @@ cd tsunpi
 - ✅ 自訂語言組合測試
 - ✅ 冪等性測試
 - ✅ 跨 macOS 版本相容性
+- 介面語系優先順序、正規化、回退與參數錯誤
 
 查看 [.github/workflows/test.yml](.github/workflows/test.yml) 了解測試詳情。
 

@@ -29,6 +29,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check Bash syntax and locale behavior
+        run: |
+          /bin/bash -n setup.sh
+          /bin/bash -n test.sh
+          /bin/bash test.sh
+
       - name: Display test info
         run: |
           echo "🧪 測試案例: ${{ matrix.test-case.name }}"

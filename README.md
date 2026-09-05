@@ -43,9 +43,15 @@ curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
 ## 📦 安裝內容
 
 ### 基礎工具
+
+**必要工具**
+
 - **Homebrew** - macOS 套件管理器
 - **Git** - 版本控制
 - **mise** - 開發工具版本管理
+
+**可選工具（預設全部安裝）**
+
 - **ripgrep** - 快速文字搜尋
 - **fzf** - 模糊搜尋工具
 - **fd** - 檔案搜尋工具
@@ -88,6 +94,28 @@ curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
 curl -fsSL https://tsunpi.phx.tw | bash -s -- --dry
 ```
 
+### 選擇 Homebrew 套件
+
+Homebrew、Git 與 mise 為必要工具；`--packages` 控制額外工具的選擇，不影響 `--langs`：
+
+```bash
+# 只選擇 fzf 與 zoxide，仍保留 Git 與 mise
+./setup.sh --packages=fzf,zoxide
+
+# 不安裝額外工具，保留必要工具與 Python
+./setup.sh --packages=none --langs=python
+
+# 預覽必要套件、選定的額外套件與語言環境
+./setup.sh --packages=stow,zoxide --langs=python,rust --dry
+```
+
+- 可選套件：`ripgrep`、`fzf`、`fd`、`uv`、`stow`、`zoxide`。目前不接受任意 Homebrew formula、cask 或 tap。
+- 未指定 `--packages` 時，預設選擇全部額外工具；`none` 只略過額外工具，不會略過語言環境，也不會移除已安裝的套件。
+- 名稱以逗號分隔、不含空白。重複名稱只處理一次；列出 `git` 或 `mise` 不影響它們的必要工具身分。
+- 空清單、未知名稱與混用 `none` 的清單會在任何安裝動作之前報錯。
+- `--packages` 優先於工具互動選單；`--interactive` 仍會詢問程式語言。`--ci` 則略過兩種選單，採用明確參數或預設值。
+- 透過執行檔偵測已安裝的工具（例如 ripgrep 對應 `rg`），存在時略過安裝。必要套件安裝失敗會中止；額外套件失敗則警告後繼續。
+
 ### 介面語言
 
 支援繁體中文（`zh-TW`）與英文（`en`）。`--locale` 控制 tsunpi 的介面語言，`--langs` 仍用於選擇要安裝的程式語言：
@@ -114,7 +142,25 @@ export TSUNPI_LOCALE=zh-TW
 
 ### 互動模式
 
-使用 `--interactive` 參數時，會以選定的介面語言顯示選單。以下為 `--locale=zh-TW` 的範例：
+使用 `--interactive` 時，會先選擇額外套件，再選擇程式語言；若已指定 `--packages`，則略過工具選單。以下為 `--locale=zh-TW` 的範例：
+
+```text
+Homebrew 與以下套件為必要工具: git mise
+請選擇額外套件 (輸入數字組合，例如 126)
+直接按 Enter 選擇全部；輸入 0 不選額外套件
+1) ripgrep
+2) fzf
+3) fd
+4) uv
+5) stow
+6) zoxide
+
+套件選擇: _
+```
+
+輸入 `26` 選擇 fzf 與 zoxide；Enter 選擇全部；單獨輸入 `0` 不選額外工具。重複數字會去重；無效數字或混用 `0` 會中止，不會開始安裝。
+
+接著選擇語言環境：
 
 ```
 請選擇要安裝的語言環境 (輸入數字組合，例如 134)
@@ -165,7 +211,7 @@ bash setup.sh
 ## ⚙️ 運作原理
 
 1. **檢查 Homebrew** - 若未安裝則自動安裝 (可能需要輸入使用者密碼)
-2. **安裝基礎工具** - 使用 Homebrew 安裝 git, mise, ripgrep, fzf, fd, uv, stow, zoxide
+2. **安裝基礎工具** - 使用 Homebrew 安裝必要的 git、mise 與選定的額外套件
 3. **產生 mise 設定** - 建立 `~/.config/mise/config.toml`
 4. **設定 Shell 整合** - 自動加入 `mise activate` 到你的 shell rc 檔
 5. **安裝語言環境** - 使用 mise 安裝選定的程式語言
@@ -302,7 +348,7 @@ cd tsunpi
 # 測試腳本
 ./setup.sh --langs=python --ci
 
-# 執行本機函式檢查與語系回歸測試（不進行安裝）
+# 執行本機函式檢查、語系與套件選擇回歸測試（不進行安裝）
 /bin/bash test.sh
 # GitHub Actions 另外執行完整安裝測試
 ```
@@ -316,6 +362,7 @@ cd tsunpi
 - ✅ 冪等性測試
 - ✅ 跨 macOS 版本相容性
 - 介面語系優先順序、正規化、回退與參數錯誤
+- 套件選擇、必要工具保留、去重與安裝失敗處理
 
 查看 [.github/workflows/test.yml](.github/workflows/test.yml) 了解測試詳情。
 

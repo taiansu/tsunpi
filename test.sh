@@ -156,6 +156,63 @@ if locale_output -- --locale=unsupported >/dev/null 2>&1 ||
 fi
 printf 'PASS: locale precedence, normalization, fallback, and argument errors\n'
 
+# Observe installation requests at the Homebrew boundary without installing tools.
+package_installation() (
+    parse_arguments "$@"
+    command_exists() {
+        [[ " ${AVAILABLE_TOOLS:-} " == *" $1 "* ]]
+    }
+    brew() {
+        printf '%s\n' "$2" >&3
+        [[ "$2" != "${FAILING_PACKAGE:-}" ]]
+    }
+    install_tools 3>&1 >/dev/null
+)
+
+assert_package_installation() {
+    local expected="$1"
+    local description="$2"
+    local actual
+    shift 2
+    if ! actual=$(package_installation "$@"); then
+        printf 'FAIL: %s (installation failed)\n' "$description" >&2
+        exit 1
+    fi
+    if [[ "$actual" != "$expected" ]]; then
+        printf 'FAIL: %s\n' "$description" >&2
+        exit 1
+    fi
+}
+
+assert_package_installation $'git\nmise\nripgrep\nfzf\nfd\nuv\nstow\nzoxide' "Default package installation"
+assert_package_installation $'git\nmise' "none preserves required packages" --packages=none
+assert_package_installation $'git\nmise\nzoxide\nstow' "Explicit selection excludes unselected tools and deduplicates" --packages=zoxide,git,stow,zoxide,mise
+AVAILABLE_TOOLS="git mise rg" assert_package_installation fd "Existing rg satisfies ripgrep" --packages=ripgrep,fd
+FAILING_PACKAGE=fd assert_package_installation $'git\nmise\nfd\nzoxide' "Optional failure does not stop later tools" --packages=fd,zoxide
+if failed_install=$(FAILING_PACKAGE=git package_installation --packages=zoxide 2>/dev/null); then
+    printf 'FAIL: required package failure did not abort\n' >&2
+    exit 1
+fi
+if [[ "$failed_install" != git ]]; then
+    printf 'FAIL: installation continued after required package failure\n' >&2
+    exit 1
+fi
+
+for invalid_packages in "" "unknown" "fzf," "none,fzf"; do
+    if rejected_install=$(package_installation "--packages=$invalid_packages" 2>/dev/null); then
+        printf 'FAIL: invalid package list accepted: %s\n' "$invalid_packages" >&2
+        exit 1
+    fi
+    if [[ -n "$rejected_install" ]]; then
+        printf 'FAIL: invalid package list caused installation\n' >&2
+        exit 1
+    fi
+done
+
+ci_packages_output=$(locale_output -- --locale=en --packages=none --ci) || exit 1
+assert_locale_output "$ci_packages_output" "CI skips both interactive menus" -- --locale=en --packages=none --interactive --ci
+printf 'PASS: package selection, required tools, executable detection, failure handling, and CI precedence\n'
+
 echo "=========================================="
 echo "  測試完成"
 echo "=========================================="

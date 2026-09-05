@@ -44,9 +44,14 @@ curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
 
 ### Core Tools
 
+**Required tools**
+
 - **Homebrew** - Package manager for macOS
 - **Git** - Version control
 - **mise** - Development tool version manager
+
+**Optional tools (all selected by default)**
+
 - **ripgrep** - Fast text search
 - **fzf** - Fuzzy finder
 - **fd** - File search tool
@@ -89,6 +94,28 @@ curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
 curl -fsSL https://tsunpi.phx.tw | bash -s -- --dry
 ```
 
+### Selecting Homebrew Packages
+
+Homebrew, Git, and mise are required. `--packages` selects additional tools independently of `--langs`:
+
+```bash
+# Select only fzf and zoxide, while retaining Git and mise
+./setup.sh --packages=fzf,zoxide
+
+# Skip optional tools, keeping required tools and Python
+./setup.sh --packages=none --langs=python
+
+# Preview required packages, selected optional packages, and language environments
+./setup.sh --packages=stow,zoxide --langs=python,rust --dry
+```
+
+- Available optional packages: `ripgrep`, `fzf`, `fd`, `uv`, `stow`, and `zoxide`. Arbitrary Homebrew formulae, casks, and taps are not accepted.
+- Without `--packages`, all optional tools are selected by default. `none` skips only optional tools, not language environments, and never uninstalls existing packages.
+- Use comma-separated names without spaces. Duplicate names are processed once; listing `git` or `mise` does not change their required status.
+- Empty lists, unknown names, and lists combining `none` with other entries are rejected before any installation.
+- `--packages` takes precedence over the package menu; `--interactive` still prompts for programming languages. `--ci` skips both menus and uses explicit arguments or defaults.
+- Existing tools are detected by executable name (for example, `rg` for ripgrep) and skipped. Failure to install a required package aborts installation; an optional package failure produces a warning and continues.
+
 ### Interface Language
 
 Traditional Chinese (`zh-TW`) and English (`en`) are supported. `--locale` controls tsunpi's interface language; `--langs` still selects the programming languages to install:
@@ -115,7 +142,25 @@ Locale precedence: `--locale` > `TSUNPI_LOCALE` > `LC_ALL` > `LC_MESSAGES` > `LA
 
 ### Interactive Mode
 
-Pass `--interactive` to display a menu in the selected interface language. The following example uses `--locale=en`:
+With `--interactive`, select optional packages first, then programming languages. Specifying `--packages` skips the package menu. The following example uses `--locale=en`:
+
+```text
+Homebrew and these packages are required: git mise
+Select optional packages (enter numbers, e.g. 126)
+Press Enter to select all; enter 0 for no optional packages
+1) ripgrep
+2) fzf
+3) fd
+4) uv
+5) stow
+6) zoxide
+
+Package selection: _
+```
+
+Enter `26` to select fzf and zoxide, press Enter to select all, or enter `0` alone for no optional tools. Duplicate digits are ignored; invalid digits or combinations containing `0` abort before installation.
+
+Next, select language environments:
 
 ```text
 Select language environments to install (enter numbers, e.g. 134)
@@ -166,7 +211,7 @@ You can also browse the [source code on GitHub](https://github.com/taiansu/tsunp
 ## How It Works
 
 1. **Check Homebrew** - Install it automatically if missing (your user password may be required).
-2. **Install core tools** - Use Homebrew to install git, mise, ripgrep, fzf, fd, uv, stow, and zoxide.
+2. **Install core tools** - Use Homebrew to install the required git and mise packages, plus the selected optional packages.
 3. **Generate mise configuration** - Create `~/.config/mise/config.toml`.
 4. **Configure shell integration** - Add `mise activate` to your shell's rc file automatically.
 5. **Install language environments** - Use mise to install the selected programming languages.
@@ -302,7 +347,7 @@ cd tsunpi
 # Try the setup script
 ./setup.sh --langs=python --ci
 
-# Run local function checks and locale regression tests (without installing)
+# Run local function checks, locale and package selection regressions (without installing)
 /bin/bash test.sh
 # GitHub Actions also runs full installation tests
 ```
@@ -316,6 +361,7 @@ The project uses GitHub Actions for automated testing:
 - Idempotency
 - Compatibility across macOS versions
 - Interface locale precedence, normalization, fallback, and argument errors
+- Package selection, required tools, deduplication, and installation failure handling
 
 See [.github/workflows/test.yml](.github/workflows/test.yml) for details.
 

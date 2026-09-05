@@ -29,7 +29,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check Bash syntax and locale behavior
+      - name: Check Bash syntax, locale, and package selection
         run: |
           /bin/bash -n setup.sh
           /bin/bash -n test.sh

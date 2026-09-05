@@ -11,6 +11,10 @@ NC='\033[0m' # No Color
 # 預設語言清單
 DEFAULT_LANGS="python,elixir,node"
 
+# Homebrew 本身由 check_homebrew 管理；套件清單同時用於驗證、選單與安裝。
+REQUIRED_PACKAGES=(git mise)
+OPTIONAL_PACKAGES=(ripgrep fzf fd uv stow zoxide)
+
 # 僅控制 tsunpi 的介面；不改變子程序的 locale。
 UI_LOCALE=en
 
@@ -24,8 +28,8 @@ translate() {
         zh-TW:invalid_locale) format='不支援的介面語系: %s（支援: en、zh-TW）' ;;
         en:unknown_argument) format='Unknown argument: %s' ;;
         zh-TW:unknown_argument) format='未知參數: %s' ;;
-        en:usage) format='Usage: %s [--locale=en|zh-TW] [--interactive] [--langs=python,node,rust] [--ci] [--dry]' ;;
-        zh-TW:usage) format='用法: %s [--locale=en|zh-TW] [--interactive] [--langs=python,node,rust] [--ci] [--dry]' ;;
+        en:usage) format='Usage: %s [--locale=en|zh-TW] [--packages=ripgrep,fzf,fd,uv,stow,zoxide|none] [--interactive] [--langs=python,node,rust] [--ci] [--dry]' ;;
+        zh-TW:usage) format='用法: %s [--locale=en|zh-TW] [--packages=ripgrep,fzf,fd,uv,stow,zoxide|none] [--interactive] [--langs=python,node,rust] [--ci] [--dry]' ;;
         en:checking_homebrew) format='Checking Homebrew...' ;;
         zh-TW:checking_homebrew) format='檢查 Homebrew...' ;;
         en:homebrew_installed) format='Homebrew is already installed' ;;
@@ -158,6 +162,30 @@ translate() {
         zh-TW:verify_installation) format='  2. 驗證安裝: mise list' ;;
         en:check_versions) format='  3. Check versions: python --version, elixir --version, etc.' ;;
         zh-TW:check_versions) format='  3. 檢查版本: python --version, elixir --version 等' ;;
+        en:invalid_package_list) format='Invalid package list: %s (use comma-separated names without spaces, or none)' ;;
+        zh-TW:invalid_package_list) format='無效的套件清單: %s（請使用逗號分隔名稱、不含空白，或使用 none）' ;;
+        en:unknown_package) format='Unsupported package: %s' ;;
+        zh-TW:unknown_package) format='不支援的套件: %s' ;;
+        en:required_packages_notice) format='Homebrew and these packages are required: %s' ;;
+        zh-TW:required_packages_notice) format='Homebrew 與以下套件為必要工具: %s' ;;
+        en:package_menu) format='Select optional packages (enter numbers, e.g. 126)' ;;
+        zh-TW:package_menu) format='請選擇額外套件 (輸入數字組合，例如 126)' ;;
+        en:package_menu_default) format='Press Enter to select all; enter 0 for no optional packages' ;;
+        zh-TW:package_menu_default) format='直接按 Enter 選擇全部；輸入 0 不選額外套件' ;;
+        en:package_prompt) format='Package selection: ' ;;
+        zh-TW:package_prompt) format='套件選擇: ' ;;
+        en:invalid_package_selection) format='Invalid package selection: %s' ;;
+        zh-TW:invalid_package_selection) format='無效的套件選擇: %s' ;;
+        en:package_input_failed) format='Unable to read package selection from the terminal; use --packages instead' ;;
+        zh-TW:package_input_failed) format='無法從終端機讀取套件選擇；請改用 --packages' ;;
+        en:required_packages) format='Required Homebrew packages:' ;;
+        zh-TW:required_packages) format='必要的 Homebrew 套件:' ;;
+        en:optional_packages) format='Selected optional Homebrew packages:' ;;
+        zh-TW:optional_packages) format='選定的額外 Homebrew 套件:' ;;
+        en:no_optional_packages) format='  (none)' ;;
+        zh-TW:no_optional_packages) format='  （無）' ;;
+        en:required_tool_failed) format='Required package %s failed to install; installation aborted' ;;
+        zh-TW:required_tool_failed) format='必要套件 %s 安裝失敗，安裝中止' ;;
         *)
             printf 'Missing translation: %s:%s\n' "$UI_LOCALE" "$key" >&2
             return 1
@@ -247,6 +275,8 @@ parse_arguments() {
     CUSTOM_LANGS=""
     CI_MODE=false
     DRY_RUN=false
+    PACKAGES_SPECIFIED=false
+    SELECTED_PACKAGES=("${OPTIONAL_PACKAGES[@]}")
 
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -255,6 +285,11 @@ parse_arguments() {
                 ;;
             --interactive)
                 INTERACTIVE=true
+                shift
+                ;;
+            --packages=*)
+                parse_packages "${1#*=}" || exit 1
+                PACKAGES_SPECIFIED=true
                 shift
                 ;;
             --langs=*)
@@ -294,7 +329,6 @@ check_homebrew() {
     fi
 
     if [[ "$DRY_RUN" == true ]]; then
-        INSTALL_HOMEBREW=false
         return 0
     fi
 
@@ -337,9 +371,89 @@ check_homebrew() {
     fi
 }
 
+# 驗證明確指定的清單；必要套件可重複列出，但無法排除。
+parse_packages() {
+    local requested="$1"
+    local package
+    local packages=()
+    SELECTED_PACKAGES=()
+
+    if [[ "$requested" == none ]]; then
+        return 0
+    fi
+    if [[ ! "$requested" =~ ^[a-z]+(,[a-z]+)*$ ]]; then
+        error invalid_package_list "$requested" >&2
+        return 1
+    fi
+
+    IFS=',' read -r -a packages <<< "$requested"
+    for package in "${packages[@]}"; do
+        if [[ " ${REQUIRED_PACKAGES[*]} " == *" $package "* ]]; then
+            continue
+        fi
+        if [[ " ${OPTIONAL_PACKAGES[*]} " != *" $package "* ]]; then
+            error unknown_package "$package" >&2
+            return 1
+        fi
+        if [[ " ${SELECTED_PACKAGES[*]} " != *" $package "* ]]; then
+            SELECTED_PACKAGES+=("$package")
+        fi
+    done
+}
+
+select_packages_interactive() {
+    local choice
+    local digit
+    local index
+    local i
+    local packages=""
+    echo "" >&2
+    message required_packages_notice "${REQUIRED_PACKAGES[*]}" >&2
+    message package_menu >&2
+    message package_menu_default >&2
+    for (( i=0; i<${#OPTIONAL_PACKAGES[@]}; i++ )); do
+        printf '%s) %s\n' "$((i + 1))" "${OPTIONAL_PACKAGES[$i]}" >&2
+    done
+    echo "" >&2
+    translate package_prompt
+    if ! IFS= read -r -p "$REPLY" choice < /dev/tty; then
+        error package_input_failed >&2
+        return 1
+    fi
+
+    case "$choice" in
+        "")
+            SELECTED_PACKAGES=("${OPTIONAL_PACKAGES[@]}")
+            return 0
+            ;;
+        0)
+            SELECTED_PACKAGES=()
+            return 0
+            ;;
+    esac
+
+    for (( i=0; i<${#choice}; i++ )); do
+        digit="${choice:$i:1}"
+        if [[ "$digit" != [1-9] ]] || (( digit > ${#OPTIONAL_PACKAGES[@]} )); then
+            error invalid_package_selection "$choice" >&2
+            return 1
+        fi
+        index=$((digit - 1))
+        packages="${packages:+$packages,}${OPTIONAL_PACKAGES[$index]}"
+    done
+    parse_packages "$packages"
+}
+
+select_packages() {
+    if [[ "$PACKAGES_SPECIFIED" != true && "$INTERACTIVE" == true && "$CI_MODE" != true ]]; then
+        select_packages_interactive || return 1
+    fi
+}
+
 # 安裝基礎工具
 install_tools() {
-    local tools=("git" "mise" "ripgrep" "fzf" "fd" "uv" "stow" "zoxide")
+    local tool
+    local executable
 
     if [[ "$DRY_RUN" == true ]]; then
         return 0
@@ -347,14 +461,22 @@ install_tools() {
 
     info installing_tools
 
-    for tool in "${tools[@]}"; do
-        if command_exists "$tool"; then
+    for tool in "${REQUIRED_PACKAGES[@]}" "${SELECTED_PACKAGES[@]}"; do
+        executable="$tool"
+        if [[ "$tool" == ripgrep ]]; then
+            executable=rg
+        fi
+        if command_exists "$executable"; then
             success tool_installed "$tool"
         else
             info installing_tool "$tool"
             if brew install "$tool"; then
                 success tool_complete "$tool"
             else
+                if [[ " ${REQUIRED_PACKAGES[*]} " == *" $tool "* ]]; then
+                    error required_tool_failed "$tool" >&2
+                    return 1
+                fi
                 warning tool_failed "$tool"
             fi
         fi
@@ -426,7 +548,7 @@ select_languages_interactive() {
 
 # 選擇要安裝的語言
 select_languages() {
-    if [[ "$INTERACTIVE" == true ]]; then
+    if [[ "$INTERACTIVE" == true && "$CI_MODE" != true ]]; then
         SELECTED_LANGS=$(select_languages_interactive)
     elif [[ -n "$CUSTOM_LANGS" ]]; then
         SELECTED_LANGS="$CUSTOM_LANGS"
@@ -478,6 +600,16 @@ dry_info() {
   echo "=========================================="
   echo ""
   message dry_homebrew "$INSTALL_HOMEBREW"
+  echo ""
+  message required_packages
+  printf '  - %s\n' "${REQUIRED_PACKAGES[@]}"
+  echo ""
+  message optional_packages
+  if [[ ${#SELECTED_PACKAGES[@]} -eq 0 ]]; then
+      message no_optional_packages
+  else
+      printf '  - %s\n' "${SELECTED_PACKAGES[@]}"
+  fi
   echo ""
   message dry_languages
   IFS=',' read -ra LANGS <<< "$SELECTED_LANGS"
@@ -689,9 +821,10 @@ main() {
         echo ""
     fi
 
-    check_homebrew
-    install_tools
+    select_packages || exit 1
     select_languages
+    check_homebrew
+    install_tools || exit 1
 
     if [[ "$DRY_RUN" == true ]]; then
         dry_info

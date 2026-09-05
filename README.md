@@ -366,6 +366,40 @@ cd tsunpi
 
 查看 [.github/workflows/test.yml](.github/workflows/test.yml) 了解測試詳情。
 
+### Cloudflare Worker 部署
+
+[`worker.js`](worker.js) 將請求以 HTTP 302 轉址至 GitHub 上的 `main/setup.sh`，不會在 Cloudflare 執行安裝腳本。部署入口由 [`wrangler.jsonc`](wrangler.jsonc) 指定，Worker 名稱為 `tsunpi`。
+
+Cloudflare 的 **Settings → Build → Build Configuration**：
+
+| 欄位 | 設定 |
+|------|------|
+| Root directory | Repo 根目錄 |
+| Build command | 留空 |
+| Deploy command | `npx --yes wrangler@4.129.0 deploy` |
+
+不要把 `setup.sh` 設為 build command；它是使用者的 macOS 安裝程式。
+
+本機驗證需要 Node.js 與 npm：
+
+```bash
+# 驗證打包，不部署到 Cloudflare
+npx --yes wrangler@4.129.0 deploy --dry-run
+
+# 啟動本機 Worker
+npx --yes wrangler@4.129.0 dev --local --port 8799
+```
+
+在另一個終端機檢查轉址，不執行安裝：
+
+```bash
+curl -sSI http://localhost:8799/
+```
+
+預期為 `302`，且 `Location` 為 `https://raw.githubusercontent.com/taiansu/tsunpi/main/setup.sh`。提交並推送後，由 Cloudflare Git 整合部署；再以 `curl -sSI https://tsunpi.phx.tw` 檢查線上回應。
+
+此設計會下載 GitHub `main` 的最新腳本，而不是綁定某次 Worker 部署的版本。
+
 ## 📄 授權
 
 MIT License - 詳見 [LICENSE](LICENSE)

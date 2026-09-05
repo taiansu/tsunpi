@@ -7,3 +7,6 @@ test-output/
 
 # 備份檔案
 *.backup.*
+
+# Wrangler 本機快取與暫存檔案
+.wrangler/

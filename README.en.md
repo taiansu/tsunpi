@@ -365,6 +365,40 @@ The project uses GitHub Actions for automated testing:
 
 See [.github/workflows/test.yml](.github/workflows/test.yml) for details.
 
+### Cloudflare Worker Deployment
+
+[`worker.js`](worker.js) returns an HTTP 302 redirect to `main/setup.sh` on GitHub; it never runs the installer on Cloudflare. [`wrangler.jsonc`](wrangler.jsonc) specifies the deployment entrypoint and the Worker name, `tsunpi`.
+
+Under Cloudflare **Settings → Build → Build Configuration**, use:
+
+| Field | Setting |
+|-------|---------|
+| Root directory | Repository root |
+| Build command | Leave empty |
+| Deploy command | `npx --yes wrangler@4.129.0 deploy` |
+
+Do not use `setup.sh` as the build command; it is the installer for users' macOS environments.
+
+Local verification requires Node.js and npm:
+
+```bash
+# Verify packaging without deploying to Cloudflare
+npx --yes wrangler@4.129.0 deploy --dry-run
+
+# Start the local Worker
+npx --yes wrangler@4.129.0 dev --local --port 8799
+```
+
+In another terminal, inspect the redirect without running the installer:
+
+```bash
+curl -sSI http://localhost:8799/
+```
+
+Expect `302` with `Location: https://raw.githubusercontent.com/taiansu/tsunpi/main/setup.sh`. After committing and pushing, Cloudflare's Git integration deploys the Worker; check the live response with `curl -sSI https://tsunpi.phx.tw`.
+
+This design downloads the latest script from GitHub `main`, rather than a version pinned to a particular Worker deployment.
+
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.

@@ -14,11 +14,11 @@
 
 ## ✨ 特色
 
-- 💡 **零設定安裝** - 一行指令完成所有設定
-- 🖥️ **正規環境配置** - 使用 [Homebrew](https://brew.sh)、[mise](https://mise.jdx.dev) 標準開發環境設定慣例，易於維護
-- 📦 **必備開發工具** - Git、Ripgrep、fzf 等開發必備工具
-- 🔧 **可選擇語言** - 預設安裝常用語言，也可自訂組合
-- ♻️ **冪等性** - 重複執行安全，已安裝的工具自動跳過
+- 💡 **預設非互動** - 無提示確認，適合 `curl | bash` 與自動化；需要時可用 `--interactive` 開啟數字選單
+- 🖥️ **正規環境配置** - 使用 [Homebrew](https://brew.sh)、[mise](https://mise.jdx.dev) 標準慣例，設定寫入 `conf.d` 不污染使用者的 `config.toml`
+- 📦 **支援 Brewfile** - 支援 `--brewfile` 一鍵 bundle 安裝
+- 🔧 **可選擇語言** - 預設安裝常用語言，也可透過旗標自訂或傳入現有 mise 設定
+- ♻️ **冪等性** - 重複執行安全，已安裝的工具與設定自動跳過
 
 ## 🚀 快速開始
 
@@ -34,10 +34,10 @@ curl -fsSL https://tsunpi.phx.tw | bash
 curl -fsSL https://tsunpi.phx.tw | bash -s -- --langs=python,rust,ruby
 ```
 
-### 互動式選擇
+### 搭配 Brewfile 與外部 mise 設定
 
 ```bash
-curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
+curl -fsSL https://tsunpi.phx.tw | bash -s -- --brewfile=/path/to/Brewfile --mise-config=/path/to/mise.toml --no-rc
 ```
 
 ## 📦 安裝內容
@@ -50,7 +50,7 @@ curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
 - **Git** - 版本控制
 - **mise** - 開發工具版本管理
 
-**可選工具（預設全部安裝）**
+**可選工具（預設全部安裝，亦可透過 `--brewfile` 取代）**
 
 - **ripgrep** - 快速文字搜尋
 - **fzf** - 模糊搜尋工具
@@ -78,6 +78,20 @@ curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
 
 ## 🎮 使用方式
 
+### 命令列旗標
+
+| 旗標 | 說明 |
+|------|------|
+| `--brewfile PATH` | 指定 Brewfile 路徑，透過 `brew bundle --file=PATH` 安裝套件（取代 `--packages`） |
+| `--mise-config PATH` | 指定 mise 設定檔路徑，逐字複製至 `~/.config/mise/conf.d/tsunpi.toml` |
+| `--no-rc` | 跳過 Shell 整合，不修改 rc 檔（如 `~/.zshrc`、`~/.bashrc`） |
+| `--langs=...` / `--langs ...` | 指定要安裝的程式語言（逗號分隔，預設 `python,elixir,node`） |
+| `--packages=...` / `--packages ...` | 指定額外 Homebrew 套件（逗號分隔，預設全部安裝；`none` 略過額外套件） |
+| `--locale=...` / `--locale ...` | 介面語系（`en` 或 `zh-TW`） |
+| `--interactive` | 以數字選單選擇額外套件與程式語言；未指定時完全不互動 |
+| `--dry` | Dry run 模式，只顯示安裝計畫而不實際執行 |
+| `-h`, `--help` | 顯示使用說明 |
+
 ### 基本用法
 
 ```bash
@@ -87,8 +101,8 @@ curl -fsSL https://tsunpi.phx.tw | bash
 # 指定語言（逗號分隔，不含空格）
 curl -fsSL https://tsunpi.phx.tw | bash -s -- --langs=python,rust
 
-# 互動式選擇
-curl -fsSL https://tsunpi.phx.tw | bash -s -- --interactive
+# 搭配 Brewfile 與自訂 mise 設定
+curl -fsSL https://tsunpi.phx.tw | bash -s -- --brewfile=/tmp/Brewfile --mise-config=/tmp/mise.toml --no-rc
 
 # Dry run 模式 (只偵測並列印安裝計劃，不實際執行)
 curl -fsSL https://tsunpi.phx.tw | bash -s -- --dry
@@ -96,7 +110,7 @@ curl -fsSL https://tsunpi.phx.tw | bash -s -- --dry
 
 ### 選擇 Homebrew 套件
 
-Homebrew、Git 與 mise 為必要工具；`--packages` 控制額外工具的選擇，不影響 `--langs`：
+Homebrew、Git 與 mise 為必要工具；`--packages` 控制額外工具的選擇：
 
 ```bash
 # 只選擇 fzf 與 zoxide，仍保留 Git 與 mise
@@ -109,11 +123,10 @@ Homebrew、Git 與 mise 為必要工具；`--packages` 控制額外工具的選�
 ./setup.sh --packages=stow,zoxide --langs=python,rust --dry
 ```
 
-- 可選套件：`ripgrep`、`fzf`、`fd`、`uv`、`stow`、`zoxide`。目前不接受任意 Homebrew formula、cask 或 tap。
-- 未指定 `--packages` 時，預設選擇全部額外工具；`none` 只略過額外工具，不會略過語言環境，也不會移除已安裝的套件。
+- 可選套件：`ripgrep`、`fzf`、`fd`、`uv`、`stow`、`zoxide`。
+- 若指定 `--brewfile`，tsunpi 會直接執行 `brew bundle` 安裝 Brewfile 內容，不再安裝 `--packages` 中的額外套件。
+- 未指定 `--packages` 且未指定 `--brewfile` 時，預設選擇全部額外工具；`none` 只略過額外工具，不會略過語言環境，也不會移除已安裝的套件。
 - 名稱以逗號分隔、不含空白。重複名稱只處理一次；列出 `git` 或 `mise` 不影響它們的必要工具身分。
-- 空清單、未知名稱與混用 `none` 的清單會在任何安裝動作之前報錯。
-- `--packages` 優先於工具互動選單；`--interactive` 仍會詢問程式語言。`--ci` 則略過兩種選單，採用明確參數或預設值。
 - 透過執行檔偵測已安裝的工具（例如 ripgrep 對應 `rg`），存在時略過安裝。必要套件安裝失敗會中止；額外套件失敗則警告後繼續。
 
 ### 介面語言
@@ -138,11 +151,10 @@ export TSUNPI_LOCALE=zh-TW
 - 語系名稱不分大小寫，接受 `-` 或 `_` 分隔，並忽略編碼與 modifier 後綴。英文語系（例如 `en_US.UTF-8`）對應 `en`；`zh_TW`、`zh_HK`、`zh_MO`、`zh-Hant` 與 `zh-Hant-*` 對應 `zh-TW`。
 - 其他系統語系（包含 `C`、`POSIX`）回退英文。明確指定不支援或空白的 `--locale`／`TSUNPI_LOCALE` 會報錯；較高優先序的設定會覆蓋較低者。
 - 只切換 tsunpi 自己的訊息，不修改 `LANG` 或 `LC_ALL`；Homebrew、mise、sudo 的輸出由各工具決定。
-- 兩種介面皆使用數字選單與 `Y/n` 回答；指令、工具名稱與產生的設定內容不隨介面語言改變。
 
 ### 互動模式
 
-使用 `--interactive` 時，會先選擇額外套件，再選擇程式語言；若已指定 `--packages`，則略過工具選單。以下為 `--locale=zh-TW` 的範例：
+預設不需要任何互動。加上 `--interactive` 會先選擇額外套件，再選擇程式語言；已用 `--packages`／`--brewfile` 指定的套件與已用 `--langs`／`--mise-config` 指定的語言會略過對應選單。以下為 `--locale=zh-TW` 的範例：
 
 ```text
 Homebrew 與以下套件為必要工具: git mise
@@ -162,7 +174,7 @@ Homebrew 與以下套件為必要工具: git mise
 
 接著選擇語言環境：
 
-```
+```text
 請選擇要安裝的語言環境 (輸入數字組合，例如 134)
 直接按 Enter 使用預設: Python, Elixir, Node
 
@@ -178,18 +190,9 @@ Homebrew 與以下套件為必要工具: git mise
 你的選擇: _
 ```
 
-輸入數字組合即可，例如：
-- 輸入 `134` → 安裝 Python, Node, Rust
-- 直接按 Enter → 安裝預設組合 (Python, Elixir, Node)
+輸入 `134` 安裝 Python、Node、Rust；直接按 Enter 安裝預設組合。
 
-### CI/CD 模式
-
-在持續整合環境中使用 `--ci` 參數跳過所有互動：
-
-```bash
-./setup.sh --ci
-./setup.sh --langs=python,node --ci
-```
+`--ci` 自 v2.1 起無作用（預設即為非互動），保留只為相容舊指令。
 
 ## 🔒 安全建議
 
@@ -210,17 +213,17 @@ bash setup.sh
 
 ## ⚙️ 運作原理
 
-1. **檢查 Homebrew** - 若未安裝則自動安裝 (可能需要輸入使用者密碼)
-2. **安裝基礎工具** - 使用 Homebrew 安裝必要的 git、mise 與選定的額外套件
-3. **產生 mise 設定** - 建立 `~/.config/mise/config.toml`
-4. **設定 Shell 整合** - 自動加入 `mise activate` 到你的 shell rc 檔
-5. **安裝語言環境** - 使用 mise 安裝選定的程式語言
+1. **檢查 Homebrew** - 若未安裝則自動安裝 (可能需要輸入管理者密碼)
+2. **安裝基礎工具** - 使用 Homebrew 安裝必要的 git、mise，以及選定的額外套件或 `--brewfile`
+3. **產生 mise 設定** - 將設定寫入 `~/.config/mise/conf.d/tsunpi.toml`（或由 `--mise-config` 逐字複製）。永不修改 `~/.config/mise/config.toml`，避免影響使用者的 dotfiles（如 stow 軟連結）
+4. **設定 Shell 整合** - 除非指定 `--no-rc`，否則自動將 `eval "$(mise activate <shell>)"` 冪等地加入 shell rc 檔
+5. **安裝語言環境** - 自動執行 `mise install` 安裝選定的程式語言
 
 ### 設定檔位置
 
-設定檔皆依標準開發者慣例配置
+設定檔皆依標準開發者慣例配置：
 
-- mise 設定檔：`~/.config/mise/config.toml`
+- mise tsunpi 設定檔：`~/.config/mise/conf.d/tsunpi.toml`
 - 語言安裝目錄：`~/.local/share/mise/installs/`
 - Shell 設定：`~/.zshrc` 或 `~/.bashrc`
 
@@ -256,15 +259,14 @@ mise use python@3.11
 mise doctor
 ```
 
-更詳細的操作請參弄 [mise 說明](https://mise.jdx.dev/installing-mise.html)
+更詳細的操作請參考 [mise 說明](https://mise.jdx.dev/installing-mise.html)
 
 ## 🙋 FAQ
 
 Q: 這個工具可以幫我安裝其它語言嗎？
 
-A: `--langs` 選項可以安裝 `mise` 有 [支援](https://mise.jdx.dev/registry.html#tools)的所有語言(及工具)。
+A: `--langs` 選項可以安裝 `mise` 有 [支援](https://mise.jdx.dev/registry.html)的所有語言與工具。
 例如：
-
 
 ```bash
 curl -fsSL https://tsunpi.phx.tw | bash -s -- --langs=python,kotlin,clojure
@@ -274,8 +276,7 @@ curl -fsSL https://tsunpi.phx.tw | bash -s -- --langs=python,kotlin,clojure
 
 Q: 承上，如果我在`--langs`選項亂加東西會怎樣？
 
-A: 你的電腦不會壞掉，但是如果你受不了 mise 一直抱怨的話，用編輯器打開 `~/.config/mise/config.toml` 把看起來不太妙的那(幾)行刪掉。
-
+A: mise registry 內的工具都可以；名稱不存在時會在安裝前中止。tsunpi 會在執行 `mise install` 前對照 [mise registry](https://mise.jdx.dev/registry.html) 檢查所有工具名稱，若有不認識的工具會顯示錯誤並中止安裝，不會安裝任何工具。
 <br/>
 
 Q: Windows 可以用嗎？
@@ -346,7 +347,7 @@ git clone https://github.com/taiansu/tsunpi.git
 cd tsunpi
 
 # 測試腳本
-./setup.sh --langs=python --ci
+./setup.sh --langs=python --dry
 
 # 執行本機函式檢查、語系與套件選擇回歸測試（不進行安裝）
 /bin/bash test.sh
@@ -363,6 +364,7 @@ cd tsunpi
 - ✅ 跨 macOS 版本相容性
 - 介面語系優先順序、正規化、回退與參數錯誤
 - 套件選擇、必要工具保留、去重與安裝失敗處理
+- `--brewfile`、`--mise-config`、`--no-rc` 與 `conf.d` 隔離測試
 
 查看 [.github/workflows/test.yml](.github/workflows/test.yml) 了解測試詳情。
 

@@ -1,6 +1,6 @@
 # mise 設定檔範例
-# 此檔案由 dandori 自動產生
-# 位置: ~/.config/mise/config.toml
+# 此檔案由 tsunpi 自動產生
+# 位置: ~/.config/mise/conf.d/tsunpi.toml
 
 # ============================================
 # 工具版本設定

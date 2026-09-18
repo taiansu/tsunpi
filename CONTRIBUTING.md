@@ -63,13 +63,15 @@
 
 4. **測試修改**
    ```bash
-   # 本地測試
-   ./setup.sh --ci
+   # 本地測試（dry-run）
+   ./setup.sh --dry
 
    # 測試不同語言組合
-   ./setup.sh --langs=python --ci
-   ./setup.sh --langs=python,node --ci
-   ```
+   ./setup.sh --langs=python --dry
+   ./setup.sh --langs=python,node --dry
+
+   # 執行測試套件
+   /bin/bash test.sh
 
 5. **提交變更**
    ```bash
@@ -133,16 +135,19 @@ docs: 更新安裝時間說明
 ### 本地測試
 
 ```bash
-# 快速測試（不執行 mise install）
-./setup.sh --langs=python --ci
+# 快速測試（dry-run，不進行實際安裝）
+./setup.sh --langs=python --dry
 
-# 完整測試（包含 mise install）
+# 執行本地測試套件
+/bin/bash test.sh
+
+# 完整測試（包含實際安裝）
 # 注意：首次執行可能需要 30-40 分鐘
-./setup.sh --ci
+./setup.sh
 
 # 測試冪等性
-./setup.sh --ci
-./setup.sh --ci  # 第二次應該快速完成
+./setup.sh
+./setup.sh  # 第二次應該快速完成
 ```
 
 ## 📝 文件貢獻

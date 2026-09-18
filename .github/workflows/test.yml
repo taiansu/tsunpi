@@ -67,9 +67,8 @@ jobs:
           # 給腳本執行權限
           chmod +x setup.sh
 
-          # 執行安裝腳本（自動回答所有提示為 Yes）
-          # 使用 yes 命令自動提供 "y" 回答
-          yes | ./setup.sh ${{ matrix.test-case.args }} || true
+          # 執行安裝腳本
+          ./setup.sh ${{ matrix.test-case.args }}
         shell: bash
 
       - name: Verify tools installation
@@ -92,7 +91,7 @@ jobs:
         run: |
           echo "🔍 驗證 mise 設定檔..."
 
-          config_file="$HOME/.config/mise/config.toml"
+          config_file="$HOME/.config/mise/conf.d/tsunpi.toml"
 
           if [[ -f "$config_file" ]]; then
             echo "✓ 設定檔存在: $config_file"
@@ -102,6 +101,11 @@ jobs:
             echo ""
           else
             echo "✗ 設定檔不存在"
+            exit 1
+          fi
+
+          if [[ -f "$HOME/.config/mise/config.toml" ]]; then
+            echo "✗ 舊設定檔 config.toml 不應存在"
             exit 1
           fi
 
@@ -221,7 +225,7 @@ jobs:
           echo "🔄 測試冪等性（重複執行）..."
 
           # 第二次執行應該跳過已安裝的項目
-          yes | ./setup.sh ${{ matrix.test-case.args }} || true
+          ./setup.sh ${{ matrix.test-case.args }}
 
           echo "✓ 冪等性測試通過"
         shell: bash

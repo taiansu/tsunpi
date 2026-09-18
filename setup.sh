@@ -1,5 +1,5 @@
 #!/bin/bash
-# v2.0.4
+# v2.1.0
 
 # 顏色定義
 RED='\033[0;31m'
@@ -11,7 +11,7 @@ NC='\033[0m' # No Color
 # 預設語言清單
 DEFAULT_LANGS="python,elixir,node"
 
-# Homebrew 本身由 check_homebrew 管理；套件清單同時用於驗證、選單與安裝。
+# Homebrew 本身由 check_homebrew 管理；套件清單同時用於驗證與安裝。
 REQUIRED_PACKAGES=(git mise)
 OPTIONAL_PACKAGES=(ripgrep fzf fd uv stow zoxide)
 
@@ -28,8 +28,8 @@ translate() {
         zh-TW:invalid_locale) format='不支援的介面語系: %s（支援: en、zh-TW）' ;;
         en:unknown_argument) format='Unknown argument: %s' ;;
         zh-TW:unknown_argument) format='未知參數: %s' ;;
-        en:usage) format='Usage: %s [--locale=en|zh-TW] [--packages=ripgrep,fzf,fd,uv,stow,zoxide|none] [--interactive] [--langs=python,node,rust] [--ci] [--dry]' ;;
-        zh-TW:usage) format='用法: %s [--locale=en|zh-TW] [--packages=ripgrep,fzf,fd,uv,stow,zoxide|none] [--interactive] [--langs=python,node,rust] [--ci] [--dry]' ;;
+        en:usage) format='Usage: %s [--locale=en|zh-TW] [--brewfile=PATH] [--mise-config=PATH] [--no-rc] [--packages=ripgrep,fzf,...|none] [--langs=python,node,rust] [--interactive] [--dry] [-h|--help]' ;;
+        zh-TW:usage) format='用法: %s [--locale=en|zh-TW] [--brewfile=PATH] [--mise-config=PATH] [--no-rc] [--packages=ripgrep,fzf,...|none] [--langs=python,node,rust] [--interactive] [--dry] [-h|--help]' ;;
         en:checking_homebrew) format='Checking Homebrew...' ;;
         zh-TW:checking_homebrew) format='檢查 Homebrew...' ;;
         en:homebrew_installed) format='Homebrew is already installed' ;;
@@ -56,8 +56,6 @@ translate() {
         zh-TW:disk_full) format='  %s. 磁碟空間不足' ;;
         en:homebrew_help) format='Review the errors above, or visit https://brew.sh to install manually' ;;
         zh-TW:homebrew_help) format='請查看上方錯誤訊息，或前往 https://brew.sh 手動安裝' ;;
-        en:press_enter_close) format='Press Enter to close...' ;;
-        zh-TW:press_enter_close) format='按 Enter 鍵關閉...' ;;
         en:installing_tools) format='Installing development tools...' ;;
         zh-TW:installing_tools) format='開始安裝開發工具...' ;;
         en:tool_installed) format='%s is already installed; skipping' ;;
@@ -68,18 +66,6 @@ translate() {
         zh-TW:tool_complete) format='%s 安裝完成' ;;
         en:tool_failed) format='%s installation failed; continuing...' ;;
         zh-TW:tool_failed) format='%s 安裝失敗，繼續執行...' ;;
-        en:select_languages) format='Select language environments to install (enter numbers, e.g. 134)' ;;
-        zh-TW:select_languages) format='請選擇要安裝的語言環境 (輸入數字組合，例如 134)' ;;
-        en:default_languages) format='Press Enter to use the defaults: Python, Elixir, Node' ;;
-        zh-TW:default_languages) format='直接按 Enter 使用預設: Python, Elixir, Node' ;;
-        en:elixir_option) format='2) Elixir (automatically installs the corresponding Erlang version)' ;;
-        zh-TW:elixir_option) format='2) Elixir (自動安裝對應 Erlang 版本)' ;;
-        en:selection_prompt) format='Your selection: ' ;;
-        zh-TW:selection_prompt) format='你的選擇: ' ;;
-        en:invalid_selection) format='Ignoring invalid option: %s' ;;
-        zh-TW:invalid_selection) format='忽略無效選項: %s' ;;
-        en:no_languages) format='No languages selected; using the defaults' ;;
-        zh-TW:no_languages) format='未選擇任何語言，使用預設設定' ;;
         en:selected_languages) format='Language environments to install: %s' ;;
         zh-TW:selected_languages) format='將安裝以下語言環境: %s' ;;
         en:dry_summary) format='Dry-run summary' ;;
@@ -88,18 +74,32 @@ translate() {
         zh-TW:dry_homebrew) format='將安裝 Homebrew: %s' ;;
         en:dry_languages) format='Language environments to install:' ;;
         zh-TW:dry_languages) format='將安裝的語言環境:' ;;
-        en:config_preview) format='config.toml preview:' ;;
-        zh-TW:config_preview) format='config.toml 預覽:' ;;
-        en:config_location) format='  Location: ~/.config/mise/config.toml' ;;
-        zh-TW:config_location) format='  位置: ~/.config/mise/config.toml' ;;
+        en:brewfile_preview) format='Brewfile preview:' ;;
+        zh-TW:brewfile_preview) format='Brewfile 預覽:' ;;
+        en:brewfile_location) format='  Location: %s' ;;
+        zh-TW:brewfile_location) format='  位置: %s' ;;
+        en:brewfile_contents) format='  Contents:' ;;
+        zh-TW:brewfile_contents) format='  內容:' ;;
+        en:installing_brewfile) format='Installing Homebrew bundle from %s...' ;;
+        zh-TW:installing_brewfile) format='從 %s 安裝 Homebrew bundle...' ;;
+        en:brewfile_complete) format='Homebrew bundle installation complete' ;;
+        zh-TW:brewfile_complete) format='Homebrew bundle 安裝完成' ;;
+        en:brewfile_failed) format='Homebrew bundle installation failed' ;;
+        zh-TW:brewfile_failed) format='Homebrew bundle 安裝失敗' ;;
+        en:brewfile_not_found) format='Brewfile not found: %s' ;;
+        zh-TW:brewfile_not_found) format='找不到 Brewfile: %s' ;;
+        en:mise_config_not_found) format='mise configuration file not found: %s' ;;
+        zh-TW:mise_config_not_found) format='找不到 mise 設定檔: %s' ;;
+        en:config_preview) format='mise configuration preview:' ;;
+        zh-TW:config_preview) format='mise 設定檔預覽:' ;;
+        en:config_location) format='  Location: ~/.config/mise/conf.d/tsunpi.toml' ;;
+        zh-TW:config_location) format='  位置: ~/.config/mise/conf.d/tsunpi.toml' ;;
         en:config_contents) format='  Contents:' ;;
         zh-TW:config_contents) format='  內容:' ;;
         en:dry_complete) format='Dry run complete; nothing was installed' ;;
         zh-TW:dry_complete) format='Dry run 完成，未進行實際安裝' ;;
         en:generating_config) format='Generating mise configuration...' ;;
         zh-TW:generating_config) format='產生 mise 設定檔...' ;;
-        en:config_backup) format='Existing configuration found; backing up to: %s' ;;
-        zh-TW:config_backup) format='發現現有設定檔，備份至: %s' ;;
         en:config_created) format='Configuration created: %s' ;;
         zh-TW:config_created) format='設定檔已建立: %s' ;;
         en:setting_shell) format='Configuring mise shell integration...' ;;
@@ -108,22 +108,14 @@ translate() {
         zh-TW:unknown_shell) format='無法偵測 shell 類型，請手動設定 mise activate' ;;
         en:shell_configured) format='mise activate is already configured in %s' ;;
         zh-TW:shell_configured) format='mise activate 已設定於 %s' ;;
-        en:shell_written_ci) format='Updated %s (CI mode)' ;;
-        zh-TW:shell_written_ci) format='已寫入 %s (CI 模式)' ;;
-        en:shell_preview) format='The following will be added to %s:' ;;
-        zh-TW:shell_preview) format='即將加入以下內容到 %s:' ;;
-        en:confirm_prompt) format='Confirm? (Y/n): ' ;;
-        zh-TW:confirm_prompt) format='是否確認? (Y/n): ' ;;
         en:shell_written) format='Updated %s' ;;
         zh-TW:shell_written) format='已寫入 %s' ;;
-        en:shell_skipped) format='Skipped writing; run manually: %s' ;;
-        zh-TW:shell_skipped) format='跳過寫入，請手動執行: %s' ;;
         en:mise_configured) format='mise configuration complete' ;;
         zh-TW:mise_configured) format='mise 設定完成' ;;
         en:compilation_warning) format='Note: compiling Erlang/Elixir may take 20–40 minutes' ;;
         zh-TW:compilation_warning) format='注意: Erlang/Elixir 編譯可能需要 20–40 分鐘' ;;
-        en:installing_languages_ci) format='Installing language environments... (CI mode)' ;;
-        zh-TW:installing_languages_ci) format='開始安裝語言環境... (CI 模式)' ;;
+        en:installing_languages) format='Installing language environments...' ;;
+        zh-TW:installing_languages) format='開始安裝語言環境...' ;;
         en:languages_complete) format='All language environments installed!' ;;
         zh-TW:languages_complete) format='所有語言環境安裝完成!' ;;
         en:mise_failed) format='mise install failed' ;;
@@ -138,16 +130,6 @@ translate() {
         zh-TW:manual_install) format='  2. 手動安裝: mise install <language>' ;;
         en:verbose_install) format='  3. View detailed logs: mise install -v' ;;
         zh-TW:verbose_install) format='  3. 查看詳細日誌: mise install -v' ;;
-        en:install_prompt) format='Run mise install now? (Y/n): ' ;;
-        zh-TW:install_prompt) format='是否立即執行 mise install? (Y/n): ' ;;
-        en:installing_languages) format='Installing language environments...' ;;
-        zh-TW:installing_languages) format='開始安裝語言環境...' ;;
-        en:install_later) format='You can run mise install manually later' ;;
-        zh-TW:install_later) format='你可以稍後手動執行: mise install' ;;
-        en:press_enter_continue) format='Press Enter to continue...' ;;
-        zh-TW:press_enter_continue) format='按 Enter 鍵繼續...' ;;
-        en:install_skipped) format='Installation skipped; run mise install later' ;;
-        zh-TW:install_skipped) format='已跳過安裝，稍後可執行: mise install' ;;
         en:banner) format=' # tsunpi — macOS development environment setup' ;;
         zh-TW:banner) format=' # tsunpi (準備) macOS 開發環境設定' ;;
         en:dry_notice) format='Dry Run - only showing planned actions' ;;
@@ -166,6 +148,18 @@ translate() {
         zh-TW:invalid_package_list) format='無效的套件清單: %s（請使用逗號分隔名稱、不含空白，或使用 none）' ;;
         en:unknown_package) format='Unsupported package: %s' ;;
         zh-TW:unknown_package) format='不支援的套件: %s' ;;
+        en:required_packages) format='Required Homebrew packages:' ;;
+        zh-TW:required_packages) format='必要的 Homebrew 套件:' ;;
+        en:optional_packages) format='Selected optional Homebrew packages:' ;;
+        zh-TW:optional_packages) format='選定的額外 Homebrew 套件:' ;;
+        en:no_optional_packages) format='  (none)' ;;
+        zh-TW:no_optional_packages) format='  （無）' ;;
+        en:required_tool_failed) format='Required package %s failed to install; installation aborted' ;;
+        zh-TW:required_tool_failed) format='必要套件 %s 安裝失敗，安裝中止' ;;
+        en:unknown_mise_tools) format='Unknown mise tools: %s — see https://mise.jdx.dev/registry.html' ;;
+        zh-TW:unknown_mise_tools) format='mise 不認識這些工具：%s — 參考 https://mise.jdx.dev/registry.html' ;;
+        en:dry_validate_tools) format='Would validate mise tools against registry' ;;
+        zh-TW:dry_validate_tools) format='將向 registry 驗證 mise 工具' ;;
         en:required_packages_notice) format='Homebrew and these packages are required: %s' ;;
         zh-TW:required_packages_notice) format='Homebrew 與以下套件為必要工具: %s' ;;
         en:package_menu) format='Select optional packages (enter numbers, e.g. 126)' ;;
@@ -178,14 +172,20 @@ translate() {
         zh-TW:invalid_package_selection) format='無效的套件選擇: %s' ;;
         en:package_input_failed) format='Unable to read package selection from the terminal; use --packages instead' ;;
         zh-TW:package_input_failed) format='無法從終端機讀取套件選擇；請改用 --packages' ;;
-        en:required_packages) format='Required Homebrew packages:' ;;
-        zh-TW:required_packages) format='必要的 Homebrew 套件:' ;;
-        en:optional_packages) format='Selected optional Homebrew packages:' ;;
-        zh-TW:optional_packages) format='選定的額外 Homebrew 套件:' ;;
-        en:no_optional_packages) format='  (none)' ;;
-        zh-TW:no_optional_packages) format='  （無）' ;;
-        en:required_tool_failed) format='Required package %s failed to install; installation aborted' ;;
-        zh-TW:required_tool_failed) format='必要套件 %s 安裝失敗，安裝中止' ;;
+        en:select_languages) format='Select language environments to install (enter numbers, e.g. 134)' ;;
+        zh-TW:select_languages) format='請選擇要安裝的語言環境 (輸入數字組合，例如 134)' ;;
+        en:default_languages) format='Press Enter to use the defaults: Python, Elixir, Node' ;;
+        zh-TW:default_languages) format='直接按 Enter 使用預設: Python, Elixir, Node' ;;
+        en:elixir_option) format='2) Elixir (automatically installs the corresponding Erlang version)' ;;
+        zh-TW:elixir_option) format='2) Elixir (自動安裝對應 Erlang 版本)' ;;
+        en:selection_prompt) format='Your selection: ' ;;
+        zh-TW:selection_prompt) format='你的選擇: ' ;;
+        en:invalid_selection) format='Ignoring invalid option: %s' ;;
+        zh-TW:invalid_selection) format='忽略無效選項: %s' ;;
+        en:no_languages) format='No languages selected; using the defaults' ;;
+        zh-TW:no_languages) format='未選擇任何語言，使用預設設定' ;;
+        en:language_input_failed) format='Unable to read language selection from the terminal; use --langs instead' ;;
+        zh-TW:language_input_failed) format='無法從終端機讀取語言選擇；請改用 --langs' ;;
         *)
             printf 'Missing translation: %s:%s\n' "$UI_LOCALE" "$key" >&2
             return 1
@@ -212,7 +212,6 @@ normalize_locale() {
 }
 
 resolve_locale() {
-    local argument
     local requested="${TSUNPI_LOCALE-}"
     local explicit="${TSUNPI_LOCALE+x}"
     UI_LOCALE=en
@@ -221,14 +220,30 @@ resolve_locale() {
     fi
 
     # 先掃描語系，讓參數錯誤不受 --locale 所在位置影響。
-    for argument in "$@"; do
-        case "$argument" in
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
             --locale=*)
-                requested="${argument#*=}"
+                requested="${1#*=}"
                 explicit=x
+                shift
+                ;;
+            --locale)
+                if [[ $# -ge 2 ]]; then
+                    requested="$2"
+                    explicit=x
+                    shift 2
+                else
+                    requested=""
+                    explicit=x
+                    shift
+                fi
+                ;;
+            *)
+                shift
                 ;;
         esac
     done
+
     if [[ "$explicit" == x ]]; then
         if normalize_locale "$requested"; then
             UI_LOCALE="$REPLY"
@@ -271,10 +286,12 @@ reload_shell() {
 
 # 解析參數
 parse_arguments() {
-    INTERACTIVE=false
     CUSTOM_LANGS=""
-    CI_MODE=false
+    INTERACTIVE=false
     DRY_RUN=false
+    NO_RC=false
+    BREWFILE_PATH=""
+    MISE_CONFIG_PATH=""
     PACKAGES_SPECIFIED=false
     SELECTED_PACKAGES=("${OPTIONAL_PACKAGES[@]}")
 
@@ -283,8 +300,39 @@ parse_arguments() {
             --locale=*)
                 shift
                 ;;
-            --interactive)
-                INTERACTIVE=true
+            --locale)
+                shift 2
+                ;;
+            --brewfile=*)
+                BREWFILE_PATH="${1#*=}"
+                shift
+                ;;
+            --brewfile)
+                if [[ $# -ge 2 ]]; then
+                    BREWFILE_PATH="$2"
+                    shift 2
+                else
+                    error unknown_argument "$1" >&2
+                    message usage "$0" >&2
+                    exit 1
+                fi
+                ;;
+            --mise-config=*)
+                MISE_CONFIG_PATH="${1#*=}"
+                shift
+                ;;
+            --mise-config)
+                if [[ $# -ge 2 ]]; then
+                    MISE_CONFIG_PATH="$2"
+                    shift 2
+                else
+                    error unknown_argument "$1" >&2
+                    message usage "$0" >&2
+                    exit 1
+                fi
+                ;;
+            --no-rc)
+                NO_RC=true
                 shift
                 ;;
             --packages=*)
@@ -292,21 +340,60 @@ parse_arguments() {
                 PACKAGES_SPECIFIED=true
                 shift
                 ;;
+            --packages)
+                if [[ $# -ge 2 ]]; then
+                    parse_packages "$2" || exit 1
+                    PACKAGES_SPECIFIED=true
+                    shift 2
+                else
+                    error unknown_argument "$1" >&2
+                    message usage "$0" >&2
+                    exit 1
+                fi
+                ;;
             --langs=*)
                 CUSTOM_LANGS="${1#*=}"
                 shift
+                ;;
+            --langs)
+                if [[ $# -ge 2 ]]; then
+                    CUSTOM_LANGS="$2"
+                    shift 2
+                else
+                    error unknown_argument "$1" >&2
+                    message usage "$0" >&2
+                    exit 1
+                fi
                 ;;
             --languages=*)
                 CUSTOM_LANGS="${1#*=}"
                 shift
                 ;;
+            --languages)
+                if [[ $# -ge 2 ]]; then
+                    CUSTOM_LANGS="$2"
+                    shift 2
+                else
+                    error unknown_argument "$1" >&2
+                    message usage "$0" >&2
+                    exit 1
+                fi
+                ;;
+            --interactive)
+                INTERACTIVE=true
+                shift
+                ;;
             --ci)
-                CI_MODE=true
+                # v2.0 相容：v2.1 起預設即為非互動，此旗標無作用。
                 shift
                 ;;
             --dry)
                 DRY_RUN=true
                 shift
+                ;;
+            -h|--help)
+                message usage "$0"
+                exit 0
                 ;;
             *)
                 error unknown_argument "$1" >&2
@@ -365,8 +452,6 @@ check_homebrew() {
         echo ""
         message homebrew_help
         echo ""
-        translate press_enter_close
-        read -p "$REPLY"
         exit 1
     fi
 }
@@ -386,7 +471,10 @@ parse_packages() {
         return 1
     fi
 
-    IFS=',' read -r -a packages <<< "$requested"
+    local old_ifs="$IFS"
+    IFS=','
+    packages=($requested)
+    IFS="$old_ifs"
     for package in "${packages[@]}"; do
         if [[ " ${REQUIRED_PACKAGES[*]} " == *" $package "* ]]; then
             continue
@@ -401,11 +489,9 @@ parse_packages() {
     done
 }
 
+# 互動式選擇額外套件；--packages 與 --brewfile 優先於選單
 select_packages_interactive() {
-    local choice
-    local digit
-    local index
-    local i
+    local choice digit index i
     local packages=""
     echo "" >&2
     message required_packages_notice "${REQUIRED_PACKAGES[*]}" >&2
@@ -445,8 +531,29 @@ select_packages_interactive() {
 }
 
 select_packages() {
-    if [[ "$PACKAGES_SPECIFIED" != true && "$INTERACTIVE" == true && "$CI_MODE" != true ]]; then
+    if [[ "$INTERACTIVE" == true && "$PACKAGES_SPECIFIED" != true && -z "$BREWFILE_PATH" ]]; then
         select_packages_interactive || return 1
+    fi
+}
+
+# 安裝 Brewfile
+install_brewfile() {
+    if [[ "$DRY_RUN" == true ]]; then
+        return 0
+    fi
+
+    info installing_brewfile "$BREWFILE_PATH"
+
+    if [[ ! -f "$BREWFILE_PATH" ]]; then
+        error brewfile_not_found "$BREWFILE_PATH" >&2
+        return 1
+    fi
+
+    if brew bundle --file="$BREWFILE_PATH"; then
+        success brewfile_complete
+    else
+        error brewfile_failed >&2
+        return 1
     fi
 }
 
@@ -461,11 +568,8 @@ install_tools() {
 
     info installing_tools
 
-    for tool in "${REQUIRED_PACKAGES[@]}" "${SELECTED_PACKAGES[@]}"; do
+    for tool in "${REQUIRED_PACKAGES[@]}"; do
         executable="$tool"
-        if [[ "$tool" == ripgrep ]]; then
-            executable=rg
-        fi
         if command_exists "$executable"; then
             success tool_installed "$tool"
         else
@@ -473,18 +577,40 @@ install_tools() {
             if brew install "$tool"; then
                 success tool_complete "$tool"
             else
-                if [[ " ${REQUIRED_PACKAGES[*]} " == *" $tool "* ]]; then
-                    error required_tool_failed "$tool" >&2
-                    return 1
-                fi
-                warning tool_failed "$tool"
+                error required_tool_failed "$tool" >&2
+                return 1
             fi
         fi
     done
+
+    if [[ -n "$BREWFILE_PATH" ]]; then
+        install_brewfile || return 1
+    else
+        for tool in "${SELECTED_PACKAGES[@]}"; do
+            executable="$tool"
+            if [[ "$tool" == ripgrep ]]; then
+                executable=rg
+            fi
+            if command_exists "$executable"; then
+                success tool_installed "$tool"
+            else
+                info installing_tool "$tool"
+                if brew install "$tool"; then
+                    success tool_complete "$tool"
+                else
+                    warning tool_failed "$tool"
+                fi
+            fi
+        done
+    fi
 }
 
-# 互動式選擇語言
+# 互動式選擇語言（輸出逗號分隔清單）
 select_languages_interactive() {
+    local choice digit i
+    local langs=()
+    local seen=()
+
     echo "" >&2
     message select_languages >&2
     translate default_languages
@@ -498,31 +624,25 @@ select_languages_interactive() {
     echo "6) Zig" >&2
     echo "7) Swift" >&2
     echo "8) Bun" >&2
-
     echo "" >&2
 
     translate selection_prompt
-    read -p "$REPLY" choice < /dev/tty
-
-    # 如果直接按 Enter，使用預設
-    if [[ -z "$choice" ]]; then
-        echo "python,elixir,node"
-        return
+    if ! IFS= read -r -p "$REPLY" choice < /dev/tty; then
+        error language_input_failed >&2
+        return 1
     fi
 
-    # 解析數字並轉換為語言名稱
-    local langs=()
-    local seen=()
+    if [[ -z "$choice" ]]; then
+        echo "$DEFAULT_LANGS"
+        return 0
+    fi
 
     for (( i=0; i<${#choice}; i++ )); do
         digit="${choice:$i:1}"
-
-        # 檢查是否已處理過此數字
-        if [[ " ${seen[@]} " =~ " ${digit} " ]]; then
+        if [[ " ${seen[*]} " == *" $digit "* ]]; then
             continue
         fi
         seen+=("$digit")
-
         case $digit in
             1) langs+=("python") ;;
             2) langs+=("elixir") ;;
@@ -532,26 +652,32 @@ select_languages_interactive() {
             6) langs+=("zig") ;;
             7) langs+=("swift") ;;
             8) langs+=("bun") ;;
-            *)
-                warning invalid_selection "$digit" >&2
-                ;;
+            *) warning invalid_selection "$digit" >&2 ;;
         esac
     done
 
     if [[ ${#langs[@]} -eq 0 ]]; then
         warning no_languages >&2
-        echo "python,elixir,node"
+        echo "$DEFAULT_LANGS"
     else
-        echo "${langs[@]}" | tr ' ' ','
+        local old_ifs="$IFS"
+        IFS=','
+        echo "${langs[*]}"
+        IFS="$old_ifs"
     fi
 }
 
-# 選擇要安裝的語言
+# 選擇要安裝的語言；--langs 與 --mise-config 優先於互動選單
 select_languages() {
-    if [[ "$INTERACTIVE" == true && "$CI_MODE" != true ]]; then
-        SELECTED_LANGS=$(select_languages_interactive)
-    elif [[ -n "$CUSTOM_LANGS" ]]; then
+    if [[ -n "$MISE_CONFIG_PATH" ]]; then
+        SELECTED_LANGS=""
+        return 0
+    fi
+
+    if [[ -n "$CUSTOM_LANGS" ]]; then
         SELECTED_LANGS="$CUSTOM_LANGS"
+    elif [[ "$INTERACTIVE" == true ]]; then
+        SELECTED_LANGS=$(select_languages_interactive) || exit 1
     else
         SELECTED_LANGS="$DEFAULT_LANGS"
     fi
@@ -566,9 +692,12 @@ select_languages() {
 expand_elixir_to_erlang() {
     local langs="$1"
     local result=""
+    local lang
 
-    IFS=',' read -ra LANG_ARRAY <<< "$langs"
-    local added_erlang=false
+    local old_ifs="$IFS"
+    IFS=','
+    local LANG_ARRAY=($langs)
+    IFS="$old_ifs"
 
     for lang in "${LANG_ARRAY[@]}"; do
         lang=$(echo "$lang" | xargs)  # trim whitespace
@@ -580,7 +709,6 @@ expand_elixir_to_erlang() {
             else
                 result="erlang,elixir"
             fi
-            added_erlang=true
         else
             if [[ -n "$result" ]]; then
                 result="$result,$lang"
@@ -603,68 +731,187 @@ dry_info() {
   echo ""
   message required_packages
   printf '  - %s\n' "${REQUIRED_PACKAGES[@]}"
-  echo ""
-  message optional_packages
-  if [[ ${#SELECTED_PACKAGES[@]} -eq 0 ]]; then
-      message no_optional_packages
+
+  if [[ -n "$BREWFILE_PATH" ]]; then
+      echo ""
+      message brewfile_preview
+      message brewfile_location "$BREWFILE_PATH"
+      message brewfile_contents
+      if [[ -f "$BREWFILE_PATH" ]]; then
+          sed 's/^/    /' "$BREWFILE_PATH"
+      else
+          printf '    (file: %s)\n' "$BREWFILE_PATH"
+      fi
   else
-      printf '  - %s\n' "${SELECTED_PACKAGES[@]}"
+      echo ""
+      message optional_packages
+      if [[ ${#SELECTED_PACKAGES[@]} -eq 0 ]]; then
+          message no_optional_packages
+      else
+          printf '  - %s\n' "${SELECTED_PACKAGES[@]}"
+      fi
+  fi
+
+  if [[ -n "$MISE_CONFIG_PATH" ]]; then
+      echo ""
+      message config_preview
+      message config_location
+      message config_contents
+      if [[ -f "$MISE_CONFIG_PATH" ]]; then
+          sed 's/^/    /' "$MISE_CONFIG_PATH"
+      else
+          printf '    (file: %s)\n' "$MISE_CONFIG_PATH"
+      fi
+  else
+      echo ""
+      message dry_languages
+      local old_ifs="$IFS"
+      IFS=','
+      local LANGS=($SELECTED_LANGS)
+      IFS="$old_ifs"
+      for lang in "${LANGS[@]}"; do
+          echo "  - $lang"
+      done
+      echo ""
+      message config_preview
+      message config_location
+      message config_contents
+      echo "    [tools]"
+      for lang in "${LANGS[@]}"; do
+          lang=$(echo "$lang" | xargs)
+          echo "    $lang = \"latest\""
+      done
   fi
   echo ""
-  message dry_languages
-  IFS=',' read -ra LANGS <<< "$SELECTED_LANGS"
-  for lang in "${LANGS[@]}"; do
-      echo "  - $lang"
-  done
-  echo ""
-  message config_preview
-  message config_location
-  message config_contents
-  echo "    [tools]"
-  for lang in "${LANGS[@]}"; do
-      lang=$(echo "$lang" | xargs)
-      echo "    $lang = \"latest\""
-  done
+  validate_mise_tools
   echo ""
   info dry_complete
 }
 
-# 產生 mise 設定檔
-generate_mise_config() {
-    local config_dir="$HOME/.config/mise"
-    local config_file="$config_dir/config.toml"
+# 產生或複製 mise 設定檔至 conf.d/tsunpi.toml
+write_mise_conf() {
+    local config_dir="$HOME/.config/mise/conf.d"
+    local config_file="$config_dir/tsunpi.toml"
 
     info generating_config
 
-    # 建立目錄
     mkdir -p "$config_dir"
 
-    # 備份現有設定
-    if [[ -f "$config_file" ]]; then
-        local backup_file="$config_file.backup.$(date +%Y%m%d_%H%M%S)"
-        warning config_backup "$backup_file"
-        cp "$config_file" "$backup_file"
-    fi
-
-    # 寫入新設定
-    cat > "$config_file" << EOF
+    if [[ -n "$MISE_CONFIG_PATH" ]]; then
+        if [[ ! -f "$MISE_CONFIG_PATH" ]]; then
+            error mise_config_not_found "$MISE_CONFIG_PATH" >&2
+            return 1
+        fi
+        cp "$MISE_CONFIG_PATH" "$config_file"
+    else
+        cat > "$config_file" << EOF
 # Generated by tsunpi
 # $(date)
 
 [tools]
 EOF
-
-    IFS=',' read -ra LANGS <<< "$SELECTED_LANGS"
-    for lang in "${LANGS[@]}"; do
-        lang=$(echo "$lang" | xargs) # trim whitespace
-        echo "$lang = \"latest\"" >> "$config_file"
-    done
+        local old_ifs="$IFS"
+        IFS=','
+        local LANGS=($SELECTED_LANGS)
+        IFS="$old_ifs"
+        for lang in "${LANGS[@]}"; do
+            lang=$(echo "$lang" | xargs) # trim whitespace
+            echo "$lang = \"latest\"" >> "$config_file"
+        done
+    fi
 
     success config_created "$config_file"
 }
 
+# 驗證 mise 設定檔中的工具清單是否皆存在於 registry
+validate_mise_tools() {
+    if [[ "$DRY_RUN" == true ]]; then
+        message dry_validate_tools
+        return 0
+    fi
+
+    local config_file="${1:-$HOME/.config/mise/conf.d/tsunpi.toml}"
+    if [[ ! -f "$config_file" ]]; then
+        return 0
+    fi
+
+    local in_tools=false
+    local tools=()
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        line="${line%$'\r'}"
+        local trimmed="${line#"${line%%[![:space:]]*}"}"
+        trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
+
+        if [[ "$trimmed" =~ ^\[[[:space:]]*([^]]+)[[:space:]]*\] ]]; then
+            local section="${BASH_REMATCH[1]}"
+            section="${section#"${section%%[![:space:]]*}"}"
+            section="${section%"${section##*[![:space:]]}"}"
+            if [[ "$section" == "tools" ]]; then
+                in_tools=true
+            else
+                in_tools=false
+            fi
+            continue
+        fi
+
+        if [[ "$in_tools" != true ]]; then
+            continue
+        fi
+
+        if [[ -z "$trimmed" || "$trimmed" == \#* ]]; then
+            continue
+        fi
+
+        if [[ "$line" == *"="* ]]; then
+            local key="${line%%=*}"
+            key="${key#"${key%%[![:space:]]*}"}"
+            key="${key%"${key##*[![:space:]]}"}"
+            key="${key#\"}"
+            key="${key%\"}"
+            key="${key#\'}"
+            key="${key%\'}"
+            if [[ -n "$key" ]]; then
+                tools+=("$key")
+            fi
+        fi
+    done < "$config_file"
+
+    if [[ ${#tools[@]} -eq 0 ]]; then
+        return 0
+    fi
+
+    local mise_cmd="${TSUNPI_MISE_EXEC:-mise}"
+    local registry_output
+    registry_output=$("$mise_cmd" registry 2>/dev/null | awk 'NF {print $1}')
+
+    local padded_registry=$'\n'"$registry_output"$'\n'
+    local unknown_tools=()
+    local tool
+    for tool in "${tools[@]}"; do
+        if [[ "$padded_registry" != *$'\n'"$tool"$'\n'* ]]; then
+            local padded_unknown=$'\n'"$(printf '%s\n' "${unknown_tools[@]}")"$'\n'
+            if [[ "$padded_unknown" != *$'\n'"$tool"$'\n'* ]]; then
+                unknown_tools+=("$tool")
+            fi
+        fi
+    done
+
+    if [[ ${#unknown_tools[@]} -gt 0 ]]; then
+        local old_ifs="$IFS"
+        IFS=', '
+        local unknown_str="${unknown_tools[*]}"
+        IFS="$old_ifs"
+        error unknown_mise_tools "$unknown_str" >&2
+        exit 1
+    fi
+}
+
 # 設定 mise activate
 setup_mise_activate() {
+    if [[ "$NO_RC" == true ]]; then
+        return 0
+    fi
+
     info setting_shell
 
     local shell_name=""
@@ -683,7 +930,7 @@ setup_mise_activate() {
         fi
     else
         warning unknown_shell
-        return
+        return 0
     fi
 
     local activate_cmd="eval \"\$(mise activate $shell_name)\""
@@ -691,47 +938,30 @@ setup_mise_activate() {
     # 檢查是否已經設定
     if [[ -f "$rc_file" ]] && grep -q "mise activate" "$rc_file"; then
         success shell_configured "$rc_file"
-        return
+        return 0
     fi
 
-    # CI 模式：自動寫入不詢問
-    if [[ "$CI_MODE" == true ]]; then
-        echo "" >> "$rc_file"
-        echo "# mise - Generated by tsunpi" >> "$rc_file"
-        echo "$activate_cmd" >> "$rc_file"
-        success shell_written_ci "$rc_file"
-        eval "$activate_cmd"
-        return
-    fi
+    echo "" >> "$rc_file"
+    echo "# mise - added by tsunpi" >> "$rc_file"
+    echo "$activate_cmd" >> "$rc_file"
+    success shell_written "$rc_file"
 
-    echo ""
-    info shell_preview "$rc_file"
-    printf '%b%s%b\n' "$YELLOW" "$activate_cmd" "$NC"
-    echo ""
-
-    translate confirm_prompt
-    read -p "$REPLY" confirm
-    confirm=${confirm:-Y}
-
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        echo "" >> "$rc_file"
-        echo "# mise - added by tsunpi" >> "$rc_file"
-        echo "$activate_cmd" >> "$rc_file"
-        success shell_written "$rc_file"
-
-        # 立即生效
-        eval "$activate_cmd"
-    else
-        warning shell_skipped "$activate_cmd"
-    fi
+    eval "$activate_cmd" 2>/dev/null || true
 }
 
 # 執行 mise install
 prompt_mise_install() {
+    if [[ "$DRY_RUN" == true ]]; then
+        return 0
+    fi
+
     echo ""
     info mise_configured
 
-    IFS=',' read -ra LANGS <<< "$SELECTED_LANGS"
+    local old_ifs="$IFS"
+    IFS=','
+    local LANGS=($SELECTED_LANGS)
+    IFS="$old_ifs"
     local has_elixir=false
     for lang in "${LANGS[@]}"; do
         if [[ "$lang" == *"elixir"* ]]; then
@@ -744,64 +974,25 @@ prompt_mise_install() {
         warning compilation_warning
     fi
 
-    # CI 模式：自動執行不詢問
-    if [[ "$CI_MODE" == true ]]; then
-        info installing_languages_ci
-        echo ""
-
-        if mise install; then
-            success languages_complete
-        else
-            error mise_failed
-            echo ""
-            message possible_causes
-            message build_dependencies_missing
-            message disk_full 2
-            message network_issue 3
-            echo ""
-            message debug_steps
-            message run_doctor
-            message manual_install
-            message verbose_install
-            echo ""
-            translate press_enter_close
-            read -p "$REPLY"
-            exit 1
-        fi
-        return
-    fi
-
+    info installing_languages
     echo ""
-    translate install_prompt
-    read -p "$REPLY" install_now
-    install_now=${install_now:-Y}
 
-    if [[ "$install_now" =~ ^[Yy]$ ]]; then
-        info installing_languages
-        echo ""
-
-        if mise install; then
-            success languages_complete
-        else
-            error mise_failed
-            echo ""
-            message possible_causes
-            message build_dependencies_missing
-            message disk_full 2
-            message network_issue 3
-            echo ""
-            message debug_steps
-            message run_doctor
-            message manual_install
-            message verbose_install
-            echo ""
-            warning install_later
-            echo ""
-            translate press_enter_continue
-            read -p "$REPLY"
-        fi
+    local mise_bin="${TSUNPI_MISE_EXEC:-mise}"
+    if "$mise_bin" install; then
+        success languages_complete
     else
-        info install_skipped
+        error mise_failed
+        echo ""
+        message possible_causes
+        message build_dependencies_missing
+        message disk_full 2
+        message network_issue 3
+        echo ""
+        message debug_steps
+        message run_doctor
+        message manual_install
+        message verbose_install
+        exit 1
     fi
 }
 
@@ -831,7 +1022,8 @@ main() {
         exit 0
     fi
 
-    generate_mise_config
+    write_mise_conf || exit 1
+    validate_mise_tools || exit 1
     setup_mise_activate
     prompt_mise_install
 
@@ -847,7 +1039,7 @@ main() {
     echo ""
 }
 
-# Check if we're source the file or execute it directly
+# Check if we're sourcing the file or executing it directly
 # check by `return` work for bash and zsh
 (return 0 2>/dev/null) && sourced=1 || sourced=0
 
